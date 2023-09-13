@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import mysql.connector
 from skimage.metrics import structural_similarity as compare_ssim
+import asyncio
 
 intents = discord.Intents.all()
 
@@ -31,10 +32,7 @@ class ImageBot(commands.Bot):
                 image = cv2.imdecode(image_np, cv2.IMREAD_COLOR)
 
                 if self.compare_images(image):
-                    await message.reply("Your message with an unauthorized image has been deleted.")
-                    await message.delete()
-                    if self.verbose_mode:
-                        print(f"Deleted a message from {message.author} with an unauthorized image.")
+                    await self.handle_blacklisted_message(message)
                 else:
                     if self.verbose_mode:
                         print(f"Message from {message.author} contains an image but is not unauthorized.")
@@ -46,7 +44,7 @@ class ImageBot(commands.Bot):
 
     def compare_images(self, uploaded_image):
         try:
-            threshold = 0.7
+            threshold = 0.1
 
             self.cursor.execute("SELECT image_data FROM images")
             for (db_image_data,) in self.cursor:
@@ -68,11 +66,20 @@ class ImageBot(commands.Bot):
                 print(f"Error comparing images: {e}")
             return False
 
+    async def handle_blacklisted_message(self, message):
+        warning_message = await message.reply("Your message contains blacklisted content and has been removed.")
+        await message.delete()
+        if self.verbose_mode:
+            print(f"Deleted a message from {message.author} with an unauthorized image.")
+
+        await asyncio.sleep(3)
+        await warning_message.delete()
+
     def run_bot(self):
         self.run(self.token)
 
 if __name__ == '__main__':
-    TOKEN = 'TOKEN'
+    TOKEN = 'INSERTTOKENHERE'
     verbose_mode = True
 
     try:
@@ -85,7 +92,7 @@ if __name__ == '__main__':
             host='',
             user='',
             password='',
-            database='' #SET DB INFO
+            database='' #fill with mysql db info
         )
         bot.cursor = bot.db.cursor()
 
