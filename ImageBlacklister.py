@@ -21,9 +21,6 @@ class ImageBot(commands.Bot):
         if message.author == self.user:
             return
 
-        if self.verbose_mode:
-            print(f"Received a message from {message.author}: {message.content}")
-
         for attachment in message.attachments:
             if self.is_image(attachment):
                 if self.verbose_mode:
