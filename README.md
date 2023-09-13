@@ -10,3 +10,5 @@ pip install numpy
 pip install mysql-connector-python
 pip install scikit-image
 ```
+
+Python 3
